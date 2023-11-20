@@ -74,6 +74,8 @@ namespace Azure.DataApiBuilder.Core.Resolvers
                 _ => throw new NotSupportedException($"unsupported operation type: {resolver.OperationType}")
             };
 
+            CheckReadAccess(entityName);
+
             return response.Resource;
         }
 
@@ -230,6 +232,14 @@ namespace Azure.DataApiBuilder.Core.Resolvers
             else
             {
                 return await container.ReplaceItemAsync<JObject>(input, id, new PartitionKey(partitionKey), new ItemRequestOptions());
+            }
+        }
+
+        private void CheckReadAccess(string entityName)
+        {
+            if (!_authorizationResolver.AreRoleAndOperationDefinedForEntity(entityName, AuthorizationType.Anonymous.ToString(), EntityActionOperation.Read))
+            {
+                throw new Exception("The database operation was successful but the current user is unable to view the response due to lack of read permissions");
             }
         }
 
